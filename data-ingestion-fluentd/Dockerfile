@@ -32,11 +32,13 @@ RUN cd /usr/src/app_folder && npm install
 # adding td-agent
 ADD td-agent.conf /etc/td-agent/td-agent.conf
 
-EXPOSE 80
+# debugging
+RUN apt-get install -y telnet inetutils-ping libnet-ifconfig-wrapper-perl
+
+EXPOSE 9092
 
 # start fluent
 ENTRYPOINT /etc/init.d/td-agent restart \ 
     && nodejs /usr/src/app_folder/application-logger.js \
     &&  /bin/bash
-
 # see td-agent's logs using: tail -f /var/log/td-agent/td-agent.log
