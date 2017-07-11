@@ -1,0 +1,33 @@
+FROM ubuntu
+
+# update, curl, sudo
+RUN apt-get update && apt-get -y upgrade
+RUN apt-get -y install curl 
+RUN apt-get -y install sudo
+
+RUN useradd -m docker && echo "docker:docker" | chpasswd && adduser docker sudo
+
+# ruby and snappy install
+RUN apt-get install -y build-essential autoconf automake libtool libsnappy-dev ruby2.3-dev
+RUN gem install snappy
+
+# install fluentd
+RUN curl -O http://packages.treasure-data.com/debian/RPM-GPG-KEY-td-agent && apt-key add RPM-GPG-KEY-td-agent && rm RPM-GPG-KEY-td-agent
+RUN curl -L http://toolbelt.treasuredata.com/sh/install-ubuntu-precise-td-agent2.sh | sh 
+#ADD td-agent.conf /etc/td-agent/td-agent.conf
+RUN curl -L https://raw.githubusercontent.com/fluent/fluentd/master/COPYING > /fluentd-license.txt
+
+# install fluentd-kafka plugin
+RUN gem install fluent-plugin-kafka
+
+# adding td-agent
+ADD td-agent.conf /etc/td-agent/td-agent.conf
+
+# debugging
+RUN apt-get install -y telnet inetutils-ping libnet-ifconfig-wrapper-perl
+
+EXPOSE 9092
+
+# start fluent
+ENTRYPOINT /etc/init.d/td-agent restart && /bin/bash
+# see td-agent's logs using: tail -f /var/log/td-agent/td-agent.log
